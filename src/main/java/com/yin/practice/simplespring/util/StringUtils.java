@@ -2,10 +2,10 @@ package com.yin.practice.simplespring.util;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.springframework.util.CollectionUtils;
 
 /**
  * 字符串工具类
@@ -328,6 +328,14 @@ public abstract class StringUtils {
 		if (CollectionUtils.isEmpty(coll)) {
 			return "";
 		}
-		return suffix;
+		StringBuilder sb = new StringBuilder();
+		Iterator<?> it = coll.iterator();
+		while(it.hasNext()){
+			sb.append(prefix).append(it.next()).append(suffix);
+			if(it.hasNext()){
+				sb.append(delim);
+			}
+		}
+		return sb.toString();
 	}
 }
