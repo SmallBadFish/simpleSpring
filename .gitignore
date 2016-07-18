@@ -9,6 +9,7 @@
 *.ear
 *.project
 *.classpath
+.settings/
 
 #Folder
 target
