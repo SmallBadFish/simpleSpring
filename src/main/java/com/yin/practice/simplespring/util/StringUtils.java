@@ -338,4 +338,18 @@ public abstract class StringUtils {
 		}
 		return sb.toString();
 	}
+	
+	/**
+	 * 
+	 * @param path
+	 * @param pathSeparator
+	 * @param trimTokens
+	 * @param b
+	 * @return
+	 */
+	public static String[] tokenizeToStringArray(String path,
+			String pathSeparator, boolean trimTokens, boolean b) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

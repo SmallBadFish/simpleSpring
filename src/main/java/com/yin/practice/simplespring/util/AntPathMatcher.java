@@ -2,23 +2,25 @@ package com.yin.practice.simplespring.util;
 
 import java.util.Comparator;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 public class AntPathMatcher implements PathMathcer {
-	// ¾²Ì¬³£Á¿
-	// Ä¬ÈÏÂ·¾¶·Ö¸î·û
+	// é™æ€å¸¸é‡
+	// é»˜è®¤è·¯å¾„åˆ†å‰²ç¬¦
 	public static final String DEFAULT_PATH_SEPARATOR = "/";
 	public static final int CACHE_TURNOFF_THRESHOLD = 65536;
 	private static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{[^/]+?\\}");
 
-	// ³ÉÔ±±äÁ¿
+	// æˆå‘˜å˜é‡
 	private String pathSeparator = DEFAULT_PATH_SEPARATOR;
 	private boolean trimTokens = true;
 	private volatile Boolean cachePatterns;
+	private final Map<String,String[]> tokenizedPatternCache = new ConcurrentHashMap<String, String[]>(256);
 	private PathSeparatorPatternCache pathSeparatorPatternCache = new PathSeparatorPatternCache(DEFAULT_PATH_SEPARATOR);
 
 	/**
-	 * ¿Õ¹¹Ôìº¯Êı ´´½¨Ò»¸öÊµÀı
+	 * ç©ºæ„é€ å‡½æ•° åˆ›å»ºä¸€ä¸ªå®ä¾‹
 	 */
 	public AntPathMatcher() {
 	}
@@ -30,15 +32,15 @@ public class AntPathMatcher implements PathMathcer {
 	}
 
 	/**
-	 * ¸ù¾İApache AntµÄÔ¼¶¨,antº¬ÓĞÈıÖÖÍ¨Åä·û'?','*','**'.<br>
-	 * Òò´ËÈç¹ûÂ·¾¶ÖĞ°üº¬ÓĞ*ºÍ£¿¾Í¿ÉÒÔ×öÎªÒ»ÖÖÂ·¾¶Æ¥ÅäÄ£Ê½À´Ê¹ÓÃ
+	 * æ ¹æ®Apache Antçš„çº¦å®š,antå«æœ‰ä¸‰ç§é€šé…ç¬¦'?','*','**'.<br>
+	 * å› æ­¤å¦‚æœè·¯å¾„ä¸­åŒ…å«æœ‰*å’Œï¼Ÿå°±å¯ä»¥åšä¸ºä¸€ç§è·¯å¾„åŒ¹é…æ¨¡å¼æ¥ä½¿ç”¨
 	 */
 	public boolean isPattern(String path) {
 		return (path.indexOf('*') != -1 || path.indexOf('?') != -1);
 	}
 
 	/**
-	 * ¸ù¾İ¸ø¶¨µÄÂ·¾¶ºÍ¹æÔò½øĞĞÆ¥Åä
+	 * æ ¹æ®ç»™å®šçš„è·¯å¾„å’Œè§„åˆ™è¿›è¡ŒåŒ¹é…
 	 */
 	public boolean match(String pattern, String path) {
 		return doMatch(pattern, path, true, null);
@@ -50,19 +52,19 @@ public class AntPathMatcher implements PathMathcer {
 	}
 
 	/**
-	 * ½øĞĞ¹æÔòÑéÖ¤
+	 * è¿›è¡Œè§„åˆ™éªŒè¯
 	 * 
 	 * @param pattern
-	 *            Æ¥ÅäÄ£Ê½
+	 *            åŒ¹é…æ¨¡å¼
 	 * @param path
-	 *            Â·¾¶
+	 *            è·¯å¾„
 	 * @param fullMatch
 	 * @param uriTemplateVariables
 	 * @return
 	 */
 	protected boolean doMatch(String pattern, String path, boolean fullMatch,
 			Map<String, String> uriTemplateVariables) {
-		// ÅĞ¶¨Â·¾¶ºÍÆ¥Åä¹æÔòÊÇ·ñÒÑÂ·¾¶·Ö¸î·û¿ªÊ¼
+		// åˆ¤å®šè·¯å¾„å’ŒåŒ¹é…è§„åˆ™æ˜¯å¦å·²è·¯å¾„åˆ†å‰²ç¬¦å¼€å§‹
 		if (path.startsWith(this.pathSeparator) != path.startsWith(this.pathSeparator)) {
 			return false;
 		}
@@ -89,14 +91,34 @@ public class AntPathMatcher implements PathMathcer {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	/**
+	 * å¯¹è·¯å¾„æ¨¡å¼è¿›è¡Œæ ‡è®°(åˆ†è¯)
+	 * @param pattern
+	 * @return
+	 */
+	protected String[] tokenizePattern(String pattern){
+		String[] tokenized = null;
+		Boolean cachePatterns = this.cachePatterns;
+		if(cachePatterns == null || cachePatterns.booleanValue()){
+			tokenized = this.tokenizedPatternCache.get(pattern);
+		}
+		if(tokenized == null){
+			tokenized = tokenizePath(pattern);
+		}
+	}
+
+	protected String[] tokenizePath(String path) {
+		return StringUtils.tokenizeToStringArray(path,this.pathSeparator,this.trimTokens,true);
+	}
 
 	/**
 	 * A simple cache for patterns that depend on the configured path separator.
-	 * ¸ù¾İÅäÖÃµÄÂ·¾¶·Ö¸î·û¶ÔÓ³Éä¹æÔòµÄ¼òµ¥»º´æ¶ÔÏó
+	 * æ ¹æ®é…ç½®çš„è·¯å¾„åˆ†å‰²ç¬¦å¯¹æ˜ å°„è§„åˆ™çš„ç®€å•ç¼“å­˜å¯¹è±¡
 	 */
 	private static class PathSeparatorPatternCache {
-		private final String endsOnWildCard;// ÒÔÍ¨Åä·û½áÊø
-		private final String endsOnDoubleWildCard;// ÒÔÁ½¸öÍ¨Åä·û½áÊø
+		private final String endsOnWildCard;// ä»¥é€šé…ç¬¦ç»“æŸ
+		private final String endsOnDoubleWildCard;// ä»¥ä¸¤ä¸ªé€šé…ç¬¦ç»“æŸ
 
 		private PathSeparatorPatternCache(String pathSeparator) {
 			this.endsOnWildCard = pathSeparator + "*";
