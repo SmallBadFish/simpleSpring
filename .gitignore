@@ -16,3 +16,23 @@ target
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+
+
+.idea/compiler.xml
+.idea/copyright/
+.idea/encodings.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/simpleSpring.iml
+.idea/workspace.xml
+/.idea/vcs.xml
+/.idea/libraries/Maven__aopalliance_aopalliance_1_0.xml
+/.idea/libraries/Maven__org_springframework_spring_expression_4_1_4_RELEASE.xml
+/.idea/libraries/Maven__org_springframework_spring_context_4_1_4_RELEASE.xml
+/.idea/libraries/Maven__commons_logging_commons_logging_1_2.xml
+/.idea/libraries/Maven__org_springframework_spring_core_4_1_4_RELEASE.xml
+/.idea/libraries/Maven__javax_servlet_javax_servlet_api_3_1_b02.xml
+/.idea/libraries/Maven__org_springframework_spring_beans_4_1_4_RELEASE.xml
+/.idea/libraries/Maven__junit_junit_4_7.xml
+/.idea/libraries/Maven__org_springframework_spring_aop_4_1_4_RELEASE.xml
+/.idea/
