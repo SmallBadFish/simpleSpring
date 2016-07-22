@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.StringTokenizer;
 
 
 /**
@@ -340,16 +341,29 @@ public abstract class StringUtils {
 	}
 	
 	/**
-	 * 
-	 * @param path
-	 * @param pathSeparator
-	 * @param trimTokens
-	 * @param b
+	 * 将分割字符串后的token转换为一个String数组
+	 * @param str 要分割的字符串
+	 * @param delimiters 分割标识符
+	 * @param trimTokens 是否去掉空格
+	 * @param ignoreEmptyTokens 是否忽略空的Token
 	 * @return
 	 */
-	public static String[] tokenizeToStringArray(String path,
-			String pathSeparator, boolean trimTokens, boolean b) {
-		// TODO Auto-generated method stub
-		return null;
+	public static String[] tokenizeToStringArray(String str,
+			String delimiters, boolean trimTokens, boolean ignoreEmptyTokens) {
+		if(str==null){
+			return null;
+		}
+		StringTokenizer st = new StringTokenizer(str,delimiters);
+		List<String> tokens = new ArrayList<String>();
+		while(st.hasMoreTokens()){
+			String token = st.nextToken();
+			if(trimTokens){
+				token.trim();
+			}
+			if(!ignoreEmptyTokens || token.length() > 0){
+				tokens.add(token);
+			}
+		}
+		return toStringArray(tokens);
 	}
 }

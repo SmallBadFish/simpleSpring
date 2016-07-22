@@ -16,8 +16,10 @@ public class AntPathMatcher implements PathMathcer {
 	private String pathSeparator = DEFAULT_PATH_SEPARATOR;
 	private boolean trimTokens = true;
 	private volatile Boolean cachePatterns;
-	private final Map<String,String[]> tokenizedPatternCache = new ConcurrentHashMap<String, String[]>(256);
+	private final Map<String, String[]> tokenizedPatternCache = new ConcurrentHashMap<String, String[]>(256);
 	private PathSeparatorPatternCache pathSeparatorPatternCache = new PathSeparatorPatternCache(DEFAULT_PATH_SEPARATOR);
+	final Map<String, AntPathStringMatcher> stringMatcherCache = new ConcurrentHashMap<String, AntPathStringMatcher>(
+			256);
 
 	/**
 	 * 空构造函数 创建一个实例
@@ -68,8 +70,42 @@ public class AntPathMatcher implements PathMathcer {
 		if (path.startsWith(this.pathSeparator) != path.startsWith(this.pathSeparator)) {
 			return false;
 		}
-		
+		// pattern分割后的String数组
+		String[] pattDirs = tokenizePattern(pattern);
+		// path分割后的String数组
+		String[] pathDirs = tokenizePath(path);
+
+		// pattern 开始索引
+		int pattIdxStart = 0;
+		// pattern 结束索引
+		int pattIdxEnd = pattDirs.length - 1;
+		// path 开始索引
+		int pathIdxStart = 0;
+		// path 结束索引
+		int pathIdxEnd = pathDirs.length - 1;
+
+		// 从 ** 通配符开始自上而下匹配
+		while (pattIdxStart <= pattIdxEnd && pathIdxStart <= pathIdxEnd) {
+			String pattDir = pattDirs[pathIdxStart];
+			// ** 通配符匹配任何路径
+			if ("**".equals(pattDir)) {
+				break;
+			}
+			if (matchStrings(pattDir, pathDirs[pathIdxStart], uriTemplateVariables)) {
+
+			}
+		}
+
 		return false;
+	}
+
+	private boolean matchStrings(String pattern, String str, Map<String, String> uriTemplateVariables) {
+		return getStringMatcher(pattern).matchStrings(str, uriTemplateVariables);
+	}
+
+	private Object getStringMatcher(String pattern) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	public String extractPathWithinPattern(String pattern, String path) {
@@ -91,25 +127,43 @@ public class AntPathMatcher implements PathMathcer {
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
+
 	/**
 	 * 对路径模式进行标记(分词)
+	 * 
 	 * @param pattern
 	 * @return
 	 */
-	protected String[] tokenizePattern(String pattern){
+	protected String[] tokenizePattern(String pattern) {
 		String[] tokenized = null;
 		Boolean cachePatterns = this.cachePatterns;
-		if(cachePatterns == null || cachePatterns.booleanValue()){
+		if (cachePatterns == null || cachePatterns.booleanValue()) {
 			tokenized = this.tokenizedPatternCache.get(pattern);
 		}
-		if(tokenized == null){
+		if (tokenized == null) {
 			tokenized = tokenizePath(pattern);
+			if (cachePatterns == null && this.tokenizedPatternCache.size() >= CACHE_TURNOFF_THRESHOLD) {
+				deactivatePatternCache();
+				return tokenized;
+			}
+			if (cachePatterns == null || cachePatterns.booleanValue()) {
+				this.tokenizedPatternCache.put(pattern, tokenized);
+			}
 		}
+		return tokenized;
+	}
+
+	/**
+	 * 使集合缓存无效
+	 */
+	private void deactivatePatternCache() {
+		this.cachePatterns = false;
+		this.tokenizedPatternCache.clear();
+		this.stringMatcherCache.clear();
 	}
 
 	protected String[] tokenizePath(String path) {
-		return StringUtils.tokenizeToStringArray(path,this.pathSeparator,this.trimTokens,true);
+		return StringUtils.tokenizeToStringArray(path, this.pathSeparator, this.trimTokens, true);
 	}
 
 	/**
@@ -134,4 +188,11 @@ public class AntPathMatcher implements PathMathcer {
 		}
 	}
 
+	/**
+	 * 内部静态类检查一个String(字符串)是否和一个Pattern(模式或者匹配规则)相匹配<br>
+	 * pattern会包含特定的字符:'*'表示0个或多个字符,'?'表示一个而且仅有一个字符,'{}'表示一个URI模板pattern
+	 */
+	protected static class AntPathStringMatcher {
+		
+	}
 }
