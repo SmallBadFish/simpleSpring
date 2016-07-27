@@ -1,9 +1,14 @@
 package com.yin.practice.simplespring.util;
 
 import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.springframework.util.Assert;
 
 public class AntPathMatcher implements PathMathcer {
 	// 静态常量
@@ -92,10 +97,15 @@ public class AntPathMatcher implements PathMathcer {
 				break;
 			}
 			if (matchStrings(pattDir, pathDirs[pathIdxStart], uriTemplateVariables)) {
-
+				return false;
 			}
+			pattIdxStart++;
+			pathIdxStart++;
 		}
-
+		
+		if(pathIdxStart > pathIdxEnd){
+			
+		}
 		return false;
 	}
 
@@ -103,9 +113,20 @@ public class AntPathMatcher implements PathMathcer {
 		return getStringMatcher(pattern).matchStrings(str, uriTemplateVariables);
 	}
 
-	private Object getStringMatcher(String pattern) {
-		// TODO Auto-generated method stub
-		return null;
+	private AntPathStringMatcher getStringMatcher(String pattern) {
+		AntPathStringMatcher matcher = null;
+		Boolean cachePatterns = this.cachePatterns;
+		if (cachePatterns == null || cachePatterns.booleanValue()) {
+			matcher = this.stringMatcherCache.get(pattern);
+		}
+		if (matcher == null) {
+			matcher = new AntPathStringMatcher(pattern);
+			if (cachePatterns == null && this.stringMatcherCache.size() >= CACHE_TURNOFF_THRESHOLD) {
+				deactivatePatternCache();
+				return matcher;
+			}
+		}
+		return matcher;
 	}
 
 	public String extractPathWithinPattern(String pattern, String path) {
@@ -193,6 +214,75 @@ public class AntPathMatcher implements PathMathcer {
 	 * pattern会包含特定的字符:'*'表示0个或多个字符,'?'表示一个而且仅有一个字符,'{}'表示一个URI模板pattern
 	 */
 	protected static class AntPathStringMatcher {
-		
+		// 正则表达式: \?|\*|\{((?:\{[^/]+?\}|[^/{}]|\\[{}])+?)\}
+		// 正则表达式解析:\? \* \{((?:\{[^/]+?\}|[^/{}]|\\[{}])+?)\}
+		// 前面两组易懂 可以匹配字符'?'和'*'
+		// 最后一组拆分: \{ ((?:\{[^/]+?\}|[^/{}]|\\[{}])+?) \} 可以看出必须字符'{'开头字符'}'结尾
+		// 里面内容拆分: (?:)模式匹配 \{[^/]+?\} [^/{}] \\[{}] +? 匹配一次或多次
+		// 三组分别匹配的内容为 : 除/之外的任何字符匹配 ,除'/''{''}'之外的任何字符匹配,与'\{'或者'\}'匹配
+		private static final Pattern GLOB_PATTERN = Pattern
+				.compile("\\?|\\*|\\{((?:\\{[^/]+?\\}|[^/{}]|\\\\[{}])+?)\\}");
+		private static final String DEFAULT_VATIABLE_PATTERN = "(.*)";
+		private final Pattern pattern;
+		private final List<String> variableNames = new LinkedList<String>();
+
+		public AntPathStringMatcher(String pattern) {
+			StringBuilder patternBuilder = new StringBuilder();
+			Matcher m = GLOB_PATTERN.matcher(pattern);
+			int end = 0;
+			while (m.find()) {
+				patternBuilder.append(quote(pattern, end, m.start()));
+				String match = m.group();
+				if ("?".equals(match)) {
+					patternBuilder.append('.');
+				} else if ("*".equals(match)) {
+					patternBuilder.append(".*");
+				} else if (match.startsWith("{") && match.endsWith("}")) {
+					int colonIdx = match.indexOf(":");
+					if (colonIdx == -1) {
+						patternBuilder.append(DEFAULT_VATIABLE_PATTERN);
+						this.variableNames.add(m.group(1));
+					} else {
+						String variablePattern = match.substring(colonIdx + 1, match.length() - 1);
+						patternBuilder.append('(');
+						patternBuilder.append(variablePattern);
+						patternBuilder.append(')');
+						String variableName = match.substring(1, colonIdx);
+						this.variableNames.add(variableName);
+					}
+				}
+				end = m.end();
+			}
+			patternBuilder.append(quote(pattern, end, pattern.length()));
+			this.pattern = Pattern.compile(patternBuilder.toString());
+		}
+
+		private String quote(String s, int start, int end) {
+			if (start == end) {
+				return "";
+			}
+			return Pattern.quote(s.substring(start, end));
+		}
+
+		public boolean matchStrings(String str, Map<String, String> uriTemplateVariables) {
+			Matcher matcher = this.pattern.matcher(str);
+			if (matcher.matches()) {
+				if (uriTemplateVariables != null) {
+					Assert.isTrue(this.variableNames.size() == matcher.groupCount(),
+							"The number of capturing groups in the pattern segment " + this.pattern
+									+ " does not match the number of URI template variables it defines, which can occur if "
+									+ " capturing groups are used in a URI template regex. Use non-capturing groups instead.");
+					for (int i = 1; i < matcher.groupCount(); i++) {
+						String name = this.variableNames.get(i - 1);
+						String value = matcher.group();
+						uriTemplateVariables.put(name, value);
+					}
+				}
+				return true;
+			} else {
+				return false;
+			}
+		}
 	}
+
 }
