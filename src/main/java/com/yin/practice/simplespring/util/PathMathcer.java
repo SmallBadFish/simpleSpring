@@ -12,8 +12,10 @@ public interface PathMathcer {
 	// 路径参数是否可以作为路径模式用来匹配其他路径
 	boolean isPattern(String path);
 
+	// 根据pattern(匹配模式)去匹配路径,完整匹配
 	boolean match(String pattern, String path);
 
+	// 根据pattern(匹配模式)去匹配路径,不完整匹配
 	boolean matchStart(String pattern, String path);
 
 	String extractPathWithinPattern(String pattern, String path);

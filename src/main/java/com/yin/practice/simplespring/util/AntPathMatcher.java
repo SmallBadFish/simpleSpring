@@ -18,13 +18,16 @@ public class AntPathMatcher implements PathMathcer {
 	private static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{[^/]+?\\}");
 
 	// 成员变量
+	// 默认的路径分割符为"/"
 	private String pathSeparator = DEFAULT_PATH_SEPARATOR;
 	private boolean trimTokens = true;
+	// 是否对pattern(正则)进行缓存
 	private volatile Boolean cachePatterns;
+	// 如果cachePatterns为空或者cachePatterns为true时,使用该集合对pattern进行缓存
 	private final Map<String, String[]> tokenizedPatternCache = new ConcurrentHashMap<String, String[]>(256);
-	private PathSeparatorPatternCache pathSeparatorPatternCache = new PathSeparatorPatternCache(DEFAULT_PATH_SEPARATOR);
-	final Map<String, AntPathStringMatcher> stringMatcherCache = new ConcurrentHashMap<String, AntPathStringMatcher>(
+	private final Map<String, AntPathStringMatcher> stringMatcherCache = new ConcurrentHashMap<String, AntPathStringMatcher>(
 			256);
+	private PathSeparatorPatternCache pathSeparatorPatternCache = new PathSeparatorPatternCache(DEFAULT_PATH_SEPARATOR);
 
 	/**
 	 * 空构造函数 创建一个实例
@@ -54,8 +57,7 @@ public class AntPathMatcher implements PathMathcer {
 	}
 
 	public boolean matchStart(String pattern, String path) {
-		// TODO Auto-generated method stub
-		return false;
+		return doMatch(pattern, path, false, null);
 	}
 
 	/**
@@ -66,18 +68,19 @@ public class AntPathMatcher implements PathMathcer {
 	 * @param path
 	 *            路径
 	 * @param fullMatch
+	 *            是否完整匹配
 	 * @param uriTemplateVariables
 	 * @return
 	 */
 	protected boolean doMatch(String pattern, String path, boolean fullMatch,
 			Map<String, String> uriTemplateVariables) {
-		// 判定路径和匹配规则是否已路径分割符开始
+		// 判定路径和匹配规则是否都是已路径分割符开始
 		if (path.startsWith(this.pathSeparator) != path.startsWith(this.pathSeparator)) {
 			return false;
 		}
 		// pattern分割后的String数组
 		String[] pattDirs = tokenizePattern(pattern);
-		// path分割后的String数组
+		// path按照'/'分割符分割后的String数组
 		String[] pathDirs = tokenizePath(path);
 
 		// pattern 开始索引
@@ -102,11 +105,89 @@ public class AntPathMatcher implements PathMathcer {
 			pattIdxStart++;
 			pathIdxStart++;
 		}
-		
-		if(pathIdxStart > pathIdxEnd){
-			
+
+		if (pathIdxStart > pathIdxEnd) {
+			if (pattIdxStart > pattIdxEnd) {
+				return (pattern.endsWith(this.pathSeparator) ? path.endsWith(this.pathSeparator)
+						: !path.endsWith(this.pathSeparator));
+			}
+			if (!fullMatch) {
+				return true;
+			}
+			if (pattIdxStart == pattIdxEnd && pattDirs[pattIdxStart].equals("*") && path.endsWith(this.pathSeparator)) {
+				return true;
+			}
+			for (int i = pattIdxStart; i <= pattIdxEnd; i++) {
+				if (!pattDirs[i].equals("**")) {
+					return false;
+				}
+			}
+			return true;
+		} else if (pattIdxStart > pattIdxEnd) {
+			return true;
 		}
-		return false;
+
+		while (pattIdxStart <= pattIdxEnd && pathIdxStart <= pathIdxEnd) {
+			String pattDir = pattDirs[pattIdxEnd];
+			if (pattDir.equals("**")) {
+				break;
+			}
+			if (!matchStrings(pattDir, pathDirs[pathIdxEnd], uriTemplateVariables)) {
+				return false;
+			}
+			pattIdxEnd--;
+			pathIdxEnd--;
+		}
+
+		if (pathIdxStart > pathIdxEnd) {
+			for (int i = pattIdxStart; i <= pattIdxEnd; i++) {
+				if (!pattDirs[i].equals("**")) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		while (pattIdxStart != pattIdxEnd && pathIdxStart <= pathIdxEnd) {
+			int patIdxTmp = -1;
+			for (int i = pattIdxStart + 1; i <= pattIdxEnd; i++) {
+				if (pattDirs[i].equals("**")) {
+					patIdxTmp = i;
+					break;
+				}
+			}
+			if (patIdxTmp == pattIdxStart + 1) {
+				pattIdxStart++;
+				continue;
+			}
+			int patLength = (patIdxTmp - pattIdxStart - 1);
+			int strLength = (pathIdxEnd - pathIdxStart + 1);
+			int foundIdx = -1;
+
+			strLoop: for (int i = 0; i <= strLength - patLength; i++) {
+				for (int j = 0; j < patLength; j++) {
+					String subPat = pattDirs[pattIdxStart + j + 1];
+					String subStr = pathDirs[pathIdxStart + i + j];
+					if (!matchStrings(subPat, subStr, uriTemplateVariables)) {
+						continue strLoop;
+					}
+				}
+				foundIdx = pathIdxStart + i;
+				break;
+			}
+			if (foundIdx == -1) {
+				return false;
+			}
+			pattIdxStart = patIdxTmp;
+			pathIdxStart = foundIdx + patLength;
+		}
+
+		for (int i = pattIdxStart; i <= pattIdxEnd; i++) {
+			if (!pattDirs[i].equals("**")) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private boolean matchStrings(String pattern, String str, Map<String, String> uriTemplateVariables) {
@@ -150,7 +231,7 @@ public class AntPathMatcher implements PathMathcer {
 	}
 
 	/**
-	 * 对路径模式进行标记(分词)
+	 * 对路径模式(正则表达式)进行标记(分词)
 	 * 
 	 * @param pattern
 	 * @return
