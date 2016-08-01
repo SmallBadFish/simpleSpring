@@ -3,11 +3,11 @@ package com.yin.practice.simplespring.core.io;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 
-import org.omg.CORBA_2_3.portable.InputStream;
 import org.springframework.core.NestedIOException;
 import org.springframework.core.io.Resource;
 import org.springframework.util.Assert;
