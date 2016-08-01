@@ -25,5 +25,10 @@ public class ClassUtils {
 		}
 		return c1;
 	}
+	
+	public static void main(String[] args) {
+		ClassLoader defaultClassLoader = ClassUtils.getDefaultClassLoader();
+		System.out.println(defaultClassLoader.toString());
+	}
 
 }

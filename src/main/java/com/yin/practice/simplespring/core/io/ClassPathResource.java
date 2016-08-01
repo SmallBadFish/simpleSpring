@@ -1,10 +1,13 @@
 package com.yin.practice.simplespring.core.io;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 import com.yin.practice.simplespring.util.Assert;
 import com.yin.practice.simplespring.util.ClassUtils;
 import com.yin.practice.simplespring.util.StringUtils;
 
-public class ClassPathResource {
+public class ClassPathResource extends AbstractFileResolvingResource{
 	private String path;
 	private Object classLoader;
 	private Class<?> clazz;
@@ -47,5 +50,15 @@ public class ClassPathResource {
 		Assert.notNull(path, "Path must not be null");
 		this.path = StringUtils.cleanPath(path);
 		this.clazz = clazz;
+	}
+
+	public String getDescription() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public InputStream getInputStream() throws IOException {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
