@@ -108,8 +108,7 @@ public class AntPathMatcher implements PathMathcer {
 
 		if (pathIdxStart > pathIdxEnd) {
 			if (pattIdxStart > pattIdxEnd) {
-				return (pattern.endsWith(this.pathSeparator) ? path.endsWith(this.pathSeparator)
-						: !path.endsWith(this.pathSeparator));
+				return (pattern.endsWith(this.pathSeparator) == path.endsWith(this.pathSeparator));
 			}
 			if (!fullMatch) {
 				return true;

@@ -8,7 +8,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 /**
- * antÀàÐÍµÄurlÂ·¾¶Ó³Éä²ßÂÔ 
+ * antï¿½ï¿½ï¿½Íµï¿½urlÂ·ï¿½ï¿½Ó³ï¿½ï¿½ï¿½ï¿½ï¿½ 
  *
  */
 public class AntPathRequestMatcher implements RequestMathcer{
@@ -24,7 +24,7 @@ public class AntPathRequestMatcher implements RequestMathcer{
 	}
 	
 	
-	private static interface Matcher{
+	private interface Matcher{
 		boolean matches(String path);
 		
 		Map<String,String> extractUriTemplateVariables(String path);

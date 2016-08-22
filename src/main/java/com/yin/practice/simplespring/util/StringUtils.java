@@ -55,7 +55,7 @@ public abstract class StringUtils {
 	}
 
 	public static boolean hasLength(String str) {
-		return hasLegth((CharSequence) str);
+		return hasLegth(str);
 	}
 
 	/**
@@ -105,7 +105,7 @@ public abstract class StringUtils {
 	}
 
 	public static boolean containWhitespace(String str) {
-		return containsWhitespace((CharSequence) str);
+		return containsWhitespace(str);
 	}
 
 	/**
