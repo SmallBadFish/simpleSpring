@@ -9,58 +9,67 @@ import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 public class DefaultResourceLoader implements ResourceLoader {
-
-	private ClassLoader classLoader;
-
-	public DefaultResourceLoader() {
-		this.classLoader = ClassUtils.getDefaultClassLoader();
-	}
-
-	public DefaultResourceLoader(ClassLoader classLoader) {
-		this.classLoader = classLoader;
-	}
-
-	public void setClassLoader(ClassLoader classLoader) {
-		this.classLoader = classLoader;
-	}
-
+	@Override
 	public Resource getResource(String location) {
-		Assert.notNull(location, "Location must not be null");
-		if (location.startsWith("/")) {
-			return getResourceByPath(location);
-		} else if (location.startsWith(CLASSPATH_URL_PREFIX)) {
-			return new ClassPathResource(location.substring(CLASSPATH_URL_PREFIX.length()), getClassLoader());
-		} else {
-			try {
-				URL url = new Url(location);
-				return new UrlResource(url);
-			} catch (MalformedUrlException ex) {
-				return getResourceBypath(location);
-			}
-		}
+		return null;
 	}
 
-	protected Resource getResourceByPath(String path) {
-		return new ClassPathContextResource(path, getClassLoader());
-	}
-
+	@Override
 	public ClassLoader getClassLoader() {
-		return (this.classLoader != null ? this.classLoader : ClassUtils.getDefaultClassLoader());
+		return null;
 	}
 
-	protected static class ClassPathContextResource extends ClassPathResource implements ContextResource {
-		public ClassPathContextResource(String path, ClassLoader classLoader) {
-			super(path, classLoader);
-		}
-
-		public String getPathWithContext() {
-			return getPath();
-		}
-
-		public Resource createRelative(String relativePath) throws IOException {
-			String pathToUser = StringUtils.applyRelativePath(getPath(), relativePath);
-			return new ClassPathContextResource(pathToUser, getClassLoader());
-		}
-	}
+//	private ClassLoader classLoader;
+//
+//	public DefaultResourceLoader() {
+//		this.classLoader = ClassUtils.getDefaultClassLoader();
+//	}
+//
+//	public DefaultResourceLoader(ClassLoader classLoader) {
+//		this.classLoader = classLoader;
+//	}
+//
+//	public void setClassLoader(ClassLoader classLoader) {
+//		this.classLoader = classLoader;
+//	}
+//
+//	public Resource getResource(String location) {
+//		Assert.notNull(location, "Location must not be null");
+//		if (location.startsWith("/")) {
+//			return getResourceByPath(location);
+//		} else if (location.startsWith(CLASSPATH_URL_PREFIX)) {
+//			return new ClassPathResource(location.substring(CLASSPATH_URL_PREFIX.length()), getClassLoader());
+//		} else {
+//			try {
+//				URL url = new Url(location);
+//				return new UrlResource(url);
+//			} catch (MalformedUrlException ex) {
+//				return getResourceBypath(location);
+//			}
+//		}
+//	}
+//
+//	protected Resource getResourceByPath(String path) {
+//		return new ClassPathContextResource(path, getClassLoader());
+//	}
+//
+//	public ClassLoader getClassLoader() {
+//		return (this.classLoader != null ? this.classLoader : ClassUtils.getDefaultClassLoader());
+//	}
+//
+//	protected static class ClassPathContextResource extends ClassPathResource implements ContextResource {
+//		public ClassPathContextResource(String path, ClassLoader classLoader) {
+//			super(path, classLoader);
+//		}
+//
+//		public String getPathWithContext() {
+//			return getPath();
+//		}
+//
+//		public Resource createRelative(String relativePath) throws IOException {
+//			String pathToUser = StringUtils.applyRelativePath(getPath(), relativePath);
+//			return new ClassPathContextResource(pathToUser, getClassLoader());
+//		}
+//	}
 
 }

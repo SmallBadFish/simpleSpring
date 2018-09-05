@@ -4,7 +4,6 @@ import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 
 /**
- * 该对象是spring bean定义信息的一部分,用来存储键值对形式的属性
  *
  */
 public class BeanMetadataAttribute implements BeanMetadataElement {
@@ -15,7 +14,7 @@ public class BeanMetadataAttribute implements BeanMetadataElement {
 
 	private Object source;
 
-	// 构造函数
+	//
 	public BeanMetadataAttribute(String name, Object value) {
 		Assert.notNull(name, "Name must not be null");
 		this.name = name;
@@ -34,9 +33,6 @@ public class BeanMetadataAttribute implements BeanMetadataElement {
 		this.source = source;
 	}
 
-	public Object getSource() {
-		return this.source;
-	}
 
 	@Override
 	public boolean equals(Object other) {
@@ -61,4 +57,8 @@ public class BeanMetadataAttribute implements BeanMetadataElement {
 		return "metadata attribute '" + this.name + "'";
 	}
 
+	@Override
+	public Object getSource() {
+		return null;
+	}
 }
